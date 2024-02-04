@@ -1,0 +1,71 @@
+#npm install web3auth
+const express = require('express');
+const { Web3Auth } = require('web3auth');
+
+const app = express();
+const port = 3000;
+
+const web3auth = new Web3Auth({
+  clientId: 'your-client-id',
+  clientSecret: 'your-client-secret',
+  redirectUri: 'http://localhost:3000/callback',
+});
+
+app.get('/', (req, res) => {
+  res.send(`
+    <h1>Sign Up</h1>
+    <form action="/signup" method="post">
+      <label for="name">Name:</label>
+      <input type="text" id="name" name="name" required>
+      <br>
+      <label for="email">Email:</label>
+      <input type="email" id="email" name="email" required>
+      <br>
+      <button type="submit">Submit</button>
+    </form>
+  `);
+});
+
+app.post('/signup', async (req, res) => {
+  const { name, email } = req.body;
+
+  try {
+    const { url } = await web3auth.start({
+      scope: 'openid email',
+      state: JSON.stringify({ name, email }),
+    });
+
+    res.redirect(url);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('An error occurred while starting the sign up process.');
+  }
+});
+
+app.get('/callback', async (req, res) => {
+  const { code, state } = req.query;
+
+  try {
+    const { tokens } = await web3auth.finish({ code, state: JSON.parse(state) });
+
+    res.send(`
+      <h1>Sign Up Successful</h1>
+      <p>Welcome, ${tokens.email}!</p>
+      <p><a href="/">Sign Up Another User</a></p>
+    `);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('An error occurred while finishing the sign up process.');
+  }
+});
+
+app.listen(port, () => {
+  console.log(`Server is running at http://localhost:${port}`);
+});
+
+#Replace 'your-client-id' and 'your-client-secret
+run node app.js
+
+
+
+ visit http://localhost:3000 
